@@ -1,0 +1,59 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+#include<climits>
+#include<cstring>
+using namespace std;
+#define int long long
+const int Max_n = 5e5 + 5;
+int f[Max_n][2] , n , a[Max_n] , m , q_min[Max_n] , q_max[Max_n] , head_min = 1 , tail_min , head_max = 1 , tail_max;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+inline int cacl_min(int x)
+{
+	return f[x][0] - a[x];
+}
+inline int cacl_max(int x)
+{
+	return f[x][1] + a[x];
+}
+signed main()
+{
+//	freopen("chess-sample5.in" , "r" , stdin);
+	n = read() , m = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = read();
+	q_min[ ++ tail_min] = n;
+	q_max[ ++ tail_max] = n;
+	for(int i = n - 1 ; i >= 0 ; -- i)
+	{
+		while((q_min[head_min] > min(n , i + m)) && (head_min < tail_min))	++ head_min;
+		while((q_max[head_max] > min(n , i + m)) && (head_max < tail_max))  ++ head_max;
+		f[i][0] = cacl_max(q_max[head_max]);
+		f[i][1] = cacl_min(q_min[head_min]);
+		while((head_min <= tail_min) && (cacl_min(i) <= cacl_min(q_min[tail_min]))) 
+			-- tail_min;
+		q_min[ ++ tail_min] = i;
+		while((head_max <= tail_max) && (cacl_max(i) >= cacl_max(q_max[tail_max])))	
+			--tail_max;
+		q_max[ ++ tail_max] = i;
+	}
+	printf("%lld" , f[0][0]);
+	return 0;
+}
