@@ -1,0 +1,118 @@
+#include<cstdio>
+#include<algorithm>
+#include<set>
+#include<climits>
+#include<utility>
+#include<cctype>
+using namespace std;
+typedef long long ll;
+typedef set<pair<ll , ll> >::iterator it;
+inline ll read()
+{
+	ll res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+inline void write(ll x)
+{
+	if(x < 0)
+	{
+		putchar('-');
+		x = -x;
+	}
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+inline void writeln(ll x)
+{
+	write(x);
+	putchar('\n');
+}
+set<pair<ll , ll> > p , r;//first is val , second is pos
+const ll Max_n = 2e5;
+ll cut[Max_n] , len[Max_n] , n , q , k , ans , opt , x;
+inline ll cacl(ll tmp , ll ct)
+{
+	if(ct < 0)	return LLONG_MAX >> 1;
+	if(len[tmp] < ct)	return LLONG_MAX >> 1;
+	if(ct == 0)	return len[tmp] * len[tmp];
+	++ ct;
+	ll base = len[tmp] / ct;
+	return (base + 1) * (base + 1) * (len[tmp] % ct) + base * base * (ct - (len[tmp] % ct));
+}
+inline void pluu()
+{
+	it iter=p.end();
+	--iter;
+	pair<ll , ll> now = *iter;
+	ans -= now.first;
+	p.erase(now);
+	ll va = cacl(now.second , cut[now.second] - 1) - cacl(now.second , cut[now.second]);
+	r.erase(make_pair(va , now.second));
+	++ cut[now.second];
+	p.insert(make_pair(cacl(now.second , cut[now.second]) - cacl(now.second , cut[now.second] + 1) , now.second));
+	r.insert(now);
+}
+inline void red()
+{
+	it iter = r.begin();
+	pair<ll , ll> now = *iter;
+	ans += now.first;
+	r.erase(now);
+	ll va = cacl(now.second , cut[now.second] - 1) - cacl(now.second , cut[now.second]);
+	p.erase(make_pair(va , now.second));
+	-- cut[now.second];
+	p.insert(now);
+	r.insert(make_pair(cacl(now.second , cut[now.second] - 1) - cacl(now.second , cut[now.second]) , now.second));
+}
+signed main()
+{
+//	freopen("pancake2.in" , "r" , stdin);
+//	freopen("wrong.out" , "w" , stdout);
+	n = read() , q = read() , k = read();
+	for(ll i = 1 ; i <= n ; ++ i)
+	{
+		len[i] = read();
+		ans += len[i] * len[i];
+		p.insert(make_pair(cacl(i , 0) - cacl(i , 1) , i));
+		r.insert(make_pair(cacl(i , -1) - cacl(i , 0) , i));
+	}
+	for(ll i = 1 ; i <= k ; ++ i)
+		pluu();
+	writeln(ans);
+	while(q --)
+	{
+		opt = read();
+		if(opt == 1)	pluu();
+		if(opt == 2)	red();
+		if(opt == 3)
+		{
+			len[ ++ n] = read();
+			ans += len[n] * len[n];
+			p.insert(make_pair(cacl(n , 0) - cacl(n , 1) , n));
+			r.insert(make_pair(cacl(n , -1) - cacl(n , 0) , n));
+			ll lastans = ans;
+			red() , pluu();
+			while(lastans > ans)
+			{
+				lastans = ans;
+				red() , pluu();
+			}
+			pluu() , red();
+		}
+		writeln(ans);
+	}
+	return 0;
+}
