@@ -1,0 +1,47 @@
+#include<cstdio>
+#include<cctype>
+#include<cmath>
+#include<algorithm>
+using namespace std;
+const int Max_n = 5e5 + 5;
+double a[Max_n] , left[Max_n] , sum[Max_n] , ret;
+int n , q , l , r , zero[Max_n] , tot;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+int main()
+{
+	n = read() , q = read();
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		scanf("%lf" , a + i);
+		left[i] = a[i] - floor(a[i]);
+		sum[i] = sum[i - 1] + left[i];
+		zero[i] = zero[i - 1] + (left[i] == 0.0);
+	}
+	while(q --)
+	{
+		l = read() , r = read();
+		ret = sum[r] - sum[l - 1];
+		int ll = ((r - l + 1) >> 1) - (zero[r] - zero[l - 1]) , rr = min((r - l + 1) >> 1 , r - l + 1 - (zero[r] - zero[l - 1]));
+		if(ret - ll <= 0)	printf("%.3lf\n" , -(ret - ll));
+		else if(ret - rr >= 0)	printf("%.3lf\n" , ret - rr);
+		else	printf("%.3lf\n" , min(ceil(ret) - ret , ret - floor(ret)));
+	}
+	return 0;
+}
