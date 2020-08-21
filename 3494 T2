@@ -1,0 +1,113 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 1e5 + 5;
+struct node{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node(){}
+}edge[Max_n * 2];
+struct Node{
+	int ai , bi , di , id;
+	Node(int a , int b , int c , int d)
+	{
+		ai = a , bi = b , di = c , id = d;
+	}
+	Node(){}
+}p[Max_n];
+int head[Max_n] , aii , bii , dii , dep[Max_n] , n , m , tot , lim[Max_n] , fa[Max_n][20] , logm[Max_n];
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = node(head[x] , y);
+	head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x);
+	head[y] = tot;
+}
+void dfs(int now , int from)
+{
+	dep[now] = dep[from] + 1;
+	fa[now][0] = from;
+	for(int i = 1 ; i <= 18 ; ++ i)
+		fa[now][i] = fa[fa[now][i - 1]][i - 1];
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		if(edge[i].to == from)	continue;
+		dfs(edge[i].to , now);
+	}
+}
+inline bool cmp(Node a , Node b)
+{
+	return lim[a.id] > lim[b.id];
+}
+inline int lca(int x , int y)
+{
+	int copx = x , copy = y;
+	while(dep[x] > dep[y])
+		x = fa[x][logm[dep[x] - dep[y]]];
+	while(dep[x] < dep[y])
+		y = fa[y][logm[dep[y] - dep[x]]];
+	if(x == y)	return max(dep[x] - dep[copx] , dep[y] - dep[copx]);
+	for(int i = 18 ; i >= 0 ; -- i)
+	{
+		if(fa[x][i] == fa[y][i])	continue;
+		x = fa[x][i] , y = fa[y][i];
+	}
+	return dep[copx] + dep[copy] - 2 * dep[fa[x][0]];
+}
+inline bool checklim(int x)
+{
+	return lca(x , p[1].ai) + lca(x , p[1].bi) <= p[1].di;
+}
+inline bool check(int x)
+{
+	for(int i = 2 ; i <= m ; ++ i)
+		if(lca(x , p[i].ai) + lca(x , p[i].bi) > p[i].di)	return false;
+	return true;
+}
+int main()
+{
+	n = read() , m = read();
+	for(int i = 1 ; i < n ; ++ i)
+		add_edge(read() , read());
+	for(int i = 2 ; i <= n ; ++ i)
+		logm[i] = logm[i / 2] + 1;
+	dfs(1 , 0);
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		aii = read() , bii = read() , dii = read();
+		lim[i] = max(1 , (dep[aii] + dep[bii] - dii + 1) >> 1);
+		p[i] = Node(aii , bii , dii , i);
+	}
+	sort(p + 1 , p + m + 1 , cmp);
+	for(int i = 1 ; i <= n ; ++ i)
+		if(dep[i] == lim[p[1].id] && checklim(i))
+		{
+			if(check(i))	printf("%d" , i);
+			else printf("NO");
+			return 0;
+		}
+	printf("NO");
+	return 0;
+}
