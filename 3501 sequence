@@ -1,0 +1,60 @@
+#include<cstdio>
+#include<cctype>
+#include<climits>
+#include<algorithm>
+#define int long long
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+inline void write(int x)
+{
+	if(x < 0)
+	{
+		putchar('-');
+		x = -x;
+	}
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+const int Max_n = 1e7 + 5;
+const int MOD = 1073741824;
+int a[Max_n] , p[Max_n] , l[Max_n] , r[Max_n] , x , y , z , b[Max_n] , m , f[Max_n] , n , head = 1 , min_max , max_max;
+signed main()
+{
+	n = read() , x = read() , y = read() , z = read();
+	b[1] = read() , b[2] = read() , m = read();
+	for(int i = 3 ; i <= n ; ++ i)
+		b[i] = ((x * b[i - 1] % MOD) + (y * b[i - 2] % MOD) + z) % MOD;
+	for(int i = 1 ; i <= m ; ++ i)
+		p[i] = read() , l[i] = read() , r[i] = read();
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		while(i > p[head] && head <= m) ++ head;
+		a[i] = b[i] % (r[head] - l[head] + 1) + l[head];
+	}
+	min_max = max_max = -INT_MAX;
+	for(int i = 1 ; i <= n ; ++ i)
+	{	
+		min_max = max(min_max , f[i - 1] + a[i]);
+		max_max = max(max_max , f[i - 1] - a[i]);
+		f[i] = max(a[i] + max_max , min_max - a[i]);
+	}
+	write(f[n]);
+	return 0;
+}
