@@ -1,0 +1,101 @@
+#include<cstdio>
+#include<cctype>
+#include<cmath>
+#include<algorithm>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+inline void write(int x)
+{
+	if(x < 0)
+	{
+		putchar('-');
+		x = -x;
+	}
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+const int Max_n = 5e4 + 5;
+const double eps = 1e-7;
+struct node{
+	int pos , v;
+	node(int a , int b)
+	{
+		pos = a , v = b;
+	}
+	node(){}
+}a[Max_n];
+struct Node{
+	int id;
+	double pos;
+	Node(int a , double b)
+	{
+		id = a , pos = b;
+	}
+	Node(){}
+}che[Max_n];
+inline bool cmp2(Node a , Node b)
+{
+	return a.pos < b.pos;
+}
+int tmp1 , tmp2 , n , k , st[Max_n] , top;
+double ans;
+inline bool cmp(node a , node b)
+{
+	return a.pos < b.pos;
+}
+inline bool check(double mid)
+{
+	for(int i = 1 ; i <= n ; ++ i)
+		che[i] = Node(i , (double)a[i].pos + mid * a[i].v);
+	sort(che + 1 , che + n + 1 , cmp2);
+	top = 0;
+	for(int i = 1 ; i <= n ; ++ i)
+		if(che[i].id > st[top])	st[ ++ top] = che[i].id;
+		else
+		{
+			int pos = upper_bound(st + 1 , st + top + 1 , che[i].id) - st;
+			st[pos] = che[i].id;
+		}
+	return ((n - top) <= k);
+}
+int main()
+{
+	n = read() , k = read();
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		tmp1 = read() , tmp2 = read();
+		a[i] = node(tmp1 , tmp2);
+	}
+	sort(a + 1 , a + n + 1 , cmp);
+	double l = 0 , r = 1e9;
+	while(r - l > eps)
+	{
+		double mid = (l + r) / 2;
+		if(check(mid))
+		{
+			ans = mid;
+			l = mid;
+		}
+		else r = mid;
+	}
+	if(fabs(ans - 1e9) <= eps)	printf("Forever");
+	else printf("%.4lf" , ans);
+	return 0;
+}
