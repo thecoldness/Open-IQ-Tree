@@ -1,0 +1,267 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+#include<queue>
+#include<stack>
+#include<cstring>
+using namespace std;
+const int Max_n = 5e4 + 5;
+const int Max_edge = 2e7;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+void write(int x)
+{
+	if(x < 0)
+	{
+		x = -x;
+		putchar('-');
+	}
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+struct node{
+	int l , r;
+	node(int a , int b)
+	{
+		l = a , r = b;
+	}
+	node(){}
+}tree[Max_n << 2];
+struct Node{
+	int nex , to , tim;
+	Node()=default;//C++11
+	Node(int a , int b , int c)
+	{
+		nex = a , to = b , tim = c;
+	}
+}edge[Max_edge];
+int n , m , x , q , k , in_id[Max_n] , out_id[Max_n] , head[Max_n * 6] , tot_edge , tot_dot , ui , vi;
+int xi , li , ri , ans , siz[Max_n * 6] , dfn[Max_n * 6] , tim , low[Max_n * 6];
+int bel[Max_n * 6] , sz[Max_n * 6] , tot;//sz is the size of the scc,siz is the size of the real dots
+int tot_scc , in_scc[Max_n * 6] , head_scc[Max_n * 6] , c1 , c2 , cnt1 , cnt2 , itf[Max_n * 6];
+bool vis[Max_n * 6] , flag_x[Max_n * 6] , flag_ring[Max_n * 6] , self_ring[Max_n * 6];
+struct NOde{
+	int nex , to;
+	NOde(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	NOde(){}
+}edge_scc[Max_edge];
+inline void add_edge(int x , int y , int z)
+{
+	edge[ ++ tot_edge] = Node(head[x] , y , z);
+	head[x] = tot_edge;
+}
+void build(int ll , int rr , int tr)
+{
+	tree[tr] = node(ll , rr);
+	if(ll == rr)
+	{
+		out_id[ll] = tr;
+		tot_dot = max(tot_dot , tr);
+		siz[tr] = 1; 
+		return;
+	}
+	add_edge(tr , tr * 2 , 0);
+	add_edge(tr , tr * 2 + 1 , 0);
+	int mid = (ll + rr) >> 1;
+	build(ll , mid , tr * 2);
+	build(mid + 1 , rr , tr * 2 + 1);
+}
+void add(int l , int r , int tr , int ti)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	if(ll > r || rr < l)	return;
+	if(l <= ll && rr <= r)
+	{
+		add_edge(in_id[xi] , tr , ti);
+		return;
+	}
+	add(l , r , tr * 2 , ti);
+	add(l , r , tr * 2 + 1 , ti);
+}
+stack<int> st;
+void tarjan(int now , int sta)
+{
+	dfn[now] = low[now] = ++ ::tim;
+	vis[now] = true;
+	st.push(now);
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		if(edge[i].tim >= sta)	continue;
+		int nex = edge[i].to;
+		if(!dfn[nex])
+		{
+			tarjan(nex , sta);
+			low[now] = min(low[now] , low[nex]);
+		}
+		else if(vis[nex])
+			low[now] = min(low[now] , dfn[nex]);
+	}
+	if(low[now] == dfn[now])
+	{
+		++ tot;
+		sz[tot] = 0;
+		while(st.top() != now)
+		{
+			bel[st.top()] = tot;
+			sz[tot] += siz[st.top()];
+			vis[st.top()] = false;
+			self_ring[tot] |= (itf[st.top()] < sta);
+			st.pop();
+		}
+		bel[st.top()] = tot;
+		sz[tot] += siz[st.top()];
+		vis[st.top()] = false;
+		self_ring[tot] |= (itf[st.top()] < sta);
+		st.pop();
+	}
+}
+inline void add_scc(int x , int y)
+{
+	edge_scc[ ++ tot_scc] =  NOde(head_scc[x] , y);
+	head_scc[x] = tot_scc;
+}
+inline bool check(int mdd)
+{
+	tot_scc = 0;
+	memset(in_scc , 0 , sizeof(in_scc));
+	memset(head_scc , 0 , sizeof(head_scc));
+	memset(flag_x , false , sizeof(flag_x));
+	memset(flag_ring , false , sizeof(flag_ring));
+	for(int i = 1 ; i <= tot_dot ; ++ i)
+		for(int j = head[i] ; j ; j = edge[j].nex)
+		{
+			if(edge[j].tim >= mdd)	continue;
+			if(bel[i] == bel[edge[j].to])	continue;
+			add_scc(bel[i] , bel[edge[j].to]);
+			++ in_scc[bel[edge[j].to]];
+		}
+	queue<int> que;
+	flag_x[bel[in_id[::x]]] = true;
+	for(int i = 1 ; i <= tot ; ++ i)
+	{
+		if(sz[i] > 1 || self_ring[tot])	flag_ring[i] = true;
+		if(!in_scc[i])	que.push(i);
+	}
+	while(!que.empty())
+	{
+		int now = que.front();
+		que.pop();
+		if(flag_x[now])	cnt1 += sz[now];
+		if(flag_ring[now] && flag_x[now])	c1 += sz[now];
+		for(int i = head_scc[now] ; i ; i = edge_scc[i].nex)
+		{
+			int nex = edge_scc[i].to;
+			flag_x[nex] |= flag_x[now];
+			if(flag_x[now])	flag_ring[nex] |= flag_ring[now];
+			-- in_scc[nex];
+			if(!in_scc[nex])	que.push(nex);
+		}
+	}
+	tot_scc = 0;
+	memset(in_scc , 0 , sizeof(in_scc));
+	memset(head_scc , 0 , sizeof(head_scc));
+	memset(flag_x , false , sizeof(flag_x));
+	memset(flag_ring , false , sizeof(flag_ring));
+	for(int i = 1 ; i <= tot_dot ; ++ i)
+		for(int j = head[i] ; j ; j = edge[j].nex)
+		{
+			if(edge[j].tim >= mdd)	continue;
+			if(bel[i] == bel[edge[j].to])	continue;
+			add_scc(bel[edge[j].to] , bel[i]);
+			++ in_scc[bel[i]];
+		}
+	flag_x[bel[in_id[::x]]] = true;
+	for(int i = 1 ; i <= tot ; ++ i)
+	{
+		if(sz[i] > 1 || self_ring[i])	flag_ring[i] = true;
+		if(!in_scc[i])	que.push(i);
+	}
+	while(!que.empty())
+	{
+		int now = que.front() ;
+		que.pop();
+		if(flag_x[now])	cnt2 += sz[now];
+		if(flag_ring[now] && flag_x[now])	c2 += sz[now];
+		for(int i = head_scc[now] ; i ; i = edge_scc[i].nex)
+		{
+			int nex = edge_scc[i].to;
+			flag_x[nex] |= flag_x[now];
+			if(flag_x[now])	flag_ring[nex] |= flag_ring[now];
+			-- in_scc[nex];
+			if(!in_scc[nex])	que.push(nex);
+		}
+	}
+	return ((long long)(n - c1) * (n - c2) + c2 * (n - cnt1) + c1 * (n - cnt2)) >= (long long)k;
+}
+int main()
+{
+	#ifdef MYDEBUG
+	freopen("game.txt" , "r" , stdin);
+	#endif
+	n = read() , m = read() , x = read() , q = read() , k = read();
+	memset(itf , 0x3f3f3f3f , sizeof(itf));
+	build(1 , n , 1);
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		in_id[i] = tot_dot + i;
+		add_edge(out_id[i] , in_id[i] , 0);
+		add_edge(in_id[i] , out_id[i] , 0);
+	}
+	tot_dot += n;
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		ui = read() , vi = read();
+		if(ui == vi)	itf[in_id[ui]] = itf[out_id[ui]] = 0;
+		add_edge(in_id[ui] , out_id[vi] , 0);
+	}
+	for(int i = 1 ; i <= q ; ++ i)
+	{
+		xi = read() , li = read() , ri = read();
+		if(li <= xi && ri >= xi)
+		{
+			itf[in_id[xi]] = min(itf[in_id[xi]] , i);
+			itf[out_id[xi]] = min(itf[out_id[xi]] , i);
+		}
+		add(li , ri , 1 , i);
+	}
+	int l = 1 , r = q + 1;
+	while(l <= r)
+	{
+		c1 = c2 = cnt1 = cnt2 = 0;
+		::tim = 0 , tot = 0;		
+		int mid = (l + r) >> 1;
+		memset(dfn , 0 , sizeof(dfn));
+		memset(low , 0 , sizeof(low));
+		memset(sz , 0 , sizeof(sz));
+		memset(self_ring , false , sizeof(self_ring));
+		for(int i = 1 ; i <= tot_dot ; ++ i)
+			if(!dfn[i])	tarjan(i , mid);
+		if(check(mid))
+		{
+			ans = mid;
+			l = mid + 1;
+		}
+		else r = mid - 1;
+	}
+	write(ans);
+	return 0;
+}
